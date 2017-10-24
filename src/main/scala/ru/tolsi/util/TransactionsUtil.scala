@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 object TransactionsUtil {
   def createXHashUntilTimelockOrToSelfScript(digest: Array[Byte], oppositePublicKey: Array[Byte], timeout: Long, myPublicKey: Array[Byte]): Script = {
     val builder = new ScriptBuilder()
-    builder.op(OP_FALSE).build()
+    builder.op(OP_NOP).build()
   }
 
   def sendMoneyFromMultisig(txInputs: Seq[BitcoinInputInfo], v: Coin, outputScript: Script)(implicit p: Params): Transaction = {
