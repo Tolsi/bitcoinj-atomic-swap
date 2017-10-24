@@ -32,7 +32,7 @@ object Bob extends StrictLogging {
       ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(bobPublicKey), ECKey.fromPublicOnly(carolPublicState.publicKey)).asJava)
     val bobTx3Signature = BitcoinInputInfo(m.TX1Id, 0, multisigScript2of2BC2, bobPrivateKey)
 
-    val TX3 = sendMoneyFromMultisig(Seq(bobTx3Signature, m.carolTX3signature), TX3Amount, T3script, _.setLockTime(lockTimeCarolTs + 1))
+    val TX3 = sendMoneyFromMultisig(Seq(bobTx3Signature, m.carolTX3signature), TX3Amount, T3script)
     logger.debug(s"Backout TX3 for Bob [${TX3.getHashAsString}] = ${Hex.toHexString(TX3.unsafeBitcoinSerialize)}")
 
     val TX7Amount = p.carolAmount.minus(p.fee.multiply(3))
