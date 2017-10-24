@@ -24,7 +24,6 @@ object TransactionsUtil {
     tx.addOutput(v, outputScript)
     val headInput = txInputs.head
     val input = tx.addInput(Sha256Hash.wrap(headInput.txId), headInput.outputIndex, headInput.script)
-    input.setSequenceNumber(0)
     val sings = txInputs.map { txInput =>
       val pk = ECKey.fromPrivate(txInput.pk)
       tx.calculateSignature(0, pk, txInput.script, SigHash.ALL, false)
@@ -50,6 +49,9 @@ object TransactionsUtil {
     tx.addOutput(v, outputScript)
 
     val input = tx.addInput(Sha256Hash.wrap(txInput.txId), txInput.outputIndex, txInput.script)
+    // due https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki#detailed-specification
+    // if (txTo.vin[nIn].IsFinal()) return false;
+    input.setSequenceNumber(0)
     val pk = ECKey.fromPrivate(txInput.pk)
     val signature = tx.calculateSignature(0, pk, input.getScriptSig, SigHash.ALL, false)
     input.setScriptSig(new ScriptBuilder().data(signature.encodeToBitcoin()).build())
