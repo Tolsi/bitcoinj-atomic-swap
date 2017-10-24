@@ -13,7 +13,7 @@ object TransactionsUtil {
     new ScriptBuilder().op(OP_DEPTH).op(OP_2).op(OP_EQUAL).op(OP_IF)
       .op(OP_HASH160).data(digest).op(OP_EQUALVERIFY).data(oppositePublicKey).op(OP_CHECKSIG)
       .op(OP_ELSE).number(timeout).op(OP_CHECKLOCKTIMEVERIFY).op(OP_DROP).data(myPublicKey).op(OP_CHECKSIG)
-      .op(OP_ENDIF).op(OP_ENDIF)
+      .op(OP_ENDIF)
       .build
   }
 
