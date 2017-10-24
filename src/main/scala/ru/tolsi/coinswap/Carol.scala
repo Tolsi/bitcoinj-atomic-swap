@@ -60,7 +60,7 @@ object Carol extends StrictLogging {
     val TX2Amount = p.aliceAmount.minus(p.fee.multiply(2))
     val carolTx2Signature = BitcoinInputInfo(m.TX0Id, 0, multisigScript2of2BC1, carolPrivateKey)
     // todo verify m.aliceTX2signature
-    val TX2 = sendMoneyFromMultisig(Seq(m.aliceTX2signature, carolTx2Signature), TX2Amount, T2script)
+    val TX2 = sendMoneyFromMultisig(Seq(m.aliceTX2signature, carolTx2Signature), TX2Amount, T2script, _.setLockTime(lockTimeAliceTs + 1))
     logger.debug(s"Backout TX2 for Carol [${TX2.getHashAsString}] = ${Hex.toHexString(TX2.unsafeBitcoinSerialize)}")
 
     val carolTx3Signature = BitcoinInputInfo(TX1.getHashAsString, 0, multisigScript2of2BC2, carolPrivateKey)
@@ -78,7 +78,8 @@ object Carol extends StrictLogging {
            )(implicit p: Params): Either[Exception, CarolAfter5Step] = {
     val TX3Amount = p.carolAmount.minus(p.fee.multiply(2))
     // todo validate m.bobTx3Signature
-    val TX3 = sendMoneyFromMultisig(Seq(m.bobTx3Signature, prevState.carolTx3Signature), TX3Amount, prevState.T3script)
+    val lockTimeCarolTs = p.startTimestamp + p.timeout.toSeconds
+    val TX3 = sendMoneyFromMultisig(Seq(m.bobTx3Signature, prevState.carolTx3Signature), TX3Amount, prevState.T3script, _.setLockTime(lockTimeCarolTs + 1))
     logger.debug(s"Backout TX3 for Carol [${TX3.getHashAsString}] = ${Hex.toHexString(TX3.unsafeBitcoinSerialize)}")
     val TX7Amount = p.carolAmount.minus(p.fee.multiply(3))
     // todo it works in any case :<

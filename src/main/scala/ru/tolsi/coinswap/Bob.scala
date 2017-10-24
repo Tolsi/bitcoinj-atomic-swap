@@ -25,14 +25,14 @@ object Bob extends StrictLogging {
     val bobPublicKey = ECKey.fromPrivate(bobPrivateKey).getPubKey
 
     val lockTimeCarolTs = p.startTimestamp + p.timeout.toSeconds
-    val T3script = createXHashUntilTimelockOrToSelfScript(p.hashX, bobPublicKey, lockTimeCarolTs.toInt, carolPublicState.publicKey)
+    val T3script = createXHashUntilTimelockOrToSelfScript(p.hashX, bobPublicKey, lockTimeCarolTs, carolPublicState.publicKey)
 
     val TX3Amount = p.carolAmount.minus(p.fee.multiply(2))
     val multisigScript2of2BC2 =
       ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(bobPublicKey), ECKey.fromPublicOnly(carolPublicState.publicKey)).asJava)
     val bobTx3Signature = BitcoinInputInfo(m.TX1Id, 0, multisigScript2of2BC2, bobPrivateKey)
 
-    val TX3 = sendMoneyFromMultisig(Seq(bobTx3Signature, m.carolTX3signature), TX3Amount, T3script)
+    val TX3 = sendMoneyFromMultisig(Seq(bobTx3Signature, m.carolTX3signature), TX3Amount, T3script, _.setLockTime(lockTimeCarolTs + 1))
     logger.debug(s"Backout TX3 for Bob [${TX3.getHashAsString}] = ${Hex.toHexString(TX3.unsafeBitcoinSerialize)}")
 
     val TX7Amount = p.carolAmount.minus(p.fee.multiply(3))

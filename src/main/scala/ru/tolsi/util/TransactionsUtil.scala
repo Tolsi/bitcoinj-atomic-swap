@@ -1,6 +1,6 @@
 package ru.tolsi.util
 
-import org.bitcoinj.core.{Coin, ECKey, Sha256Hash, Transaction}
+import org.bitcoinj.core._
 import org.bitcoinj.core.Transaction.SigHash
 import org.bitcoinj.script.{Script, ScriptBuilder}
 import org.bitcoinj.script.ScriptOpCodes._
@@ -17,13 +17,15 @@ object TransactionsUtil {
       .build
   }
 
-  def sendMoneyFromMultisig(txInputs: Seq[BitcoinInputInfo], v: Coin, outputScript: Script)(implicit p: Params): Transaction = {
+  def sendMoneyFromMultisig(txInputs: Seq[BitcoinInputInfo], v: Coin, outputScript: Script, initTX: Transaction => Unit = _ => ())(implicit p: Params): Transaction = {
     require(txInputs.forall(t => t.outputIndex == txInputs.head.outputIndex && t.script == txInputs.head.script && t.txId == txInputs.head.txId))
     val tx = new Transaction(p.networkParams)
+    initTX(tx)
     tx.setPurpose(Transaction.Purpose.USER_PAYMENT)
     tx.addOutput(v, outputScript)
     val headInput = txInputs.head
     val input = tx.addInput(Sha256Hash.wrap(headInput.txId), headInput.outputIndex, headInput.script)
+    input.setSequenceNumber(0)
     val sings = txInputs.map { txInput =>
       val pk = ECKey.fromPrivate(txInput.pk)
       tx.calculateSignature(0, pk, txInput.script, SigHash.ALL, false)

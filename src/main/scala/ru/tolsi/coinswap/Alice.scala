@@ -63,7 +63,8 @@ object Alice extends StrictLogging {
     val TX2Amount = p.aliceAmount.minus(p.fee.multiply(2))
     val lockTimeAliceTs = p.startTimestamp + p.timeout.toSeconds * 2
     val T2script = createXHashUntilTimelockOrToSelfScript(p.hashX, prevState.carolPublicState.publicKey, lockTimeAliceTs, prevState.publicKey)
-    val TX2 = sendMoneyFromMultisig(Seq(aliceTX2signature, m.carolTX2signature), TX2Amount, T2script)
+    // todo may be use P2SH for working OP_CHECKLOCKTIMEVERIFY ?
+    val TX2 = sendMoneyFromMultisig(Seq(aliceTX2signature, m.carolTX2signature), TX2Amount, T2script, _.setLockTime(lockTimeAliceTs + 1))
     logger.debug(s"Backout TX2 for Alice [${TX2.getHashAsString}] = ${Hex.toHexString(TX2.unsafeBitcoinSerialize)}")
     val TX6Amount = p.aliceAmount.minus(p.fee.multiply(3))
     // todo it works in any case :<
