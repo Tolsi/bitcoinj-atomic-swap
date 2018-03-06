@@ -16,7 +16,7 @@ After changing the initial data, you just need to start the application and it w
 
 # How to run
 
-Using `sbt` from the project folder:
+You can run it using `sbt` from the project folder:
 
 `sbt run`
 
