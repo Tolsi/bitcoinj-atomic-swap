@@ -47,10 +47,10 @@ object CoinSwap extends App with StrictLogging {
   private val bobX = "I don't like alice".getBytes
 
   implicit private val p = buildTestParams(
-    Utils.sha256hash160(bobX),
-    Coin.parseCoin("1.83211665"),
-    Coin.parseCoin("0.25749999"),
-    1508846461
+    hashX = Utils.sha256hash160(bobX),
+    aliceAmount = Coin.parseCoin("1.83211665"),
+    carolAmount = Coin.parseCoin("0.25749999"),
+    now = System.currentTimeMillis() / 1000
   )
 
   val aliceEC = ECKey.fromPrivate(alicePk)
