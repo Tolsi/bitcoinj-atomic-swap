@@ -13,3 +13,13 @@ You need replace the private keys (in [WIF format](https://en.bitcoin.it/wiki/Wa
 You can see that I pass alice's keys as bob's keys so (that's more like atomic swap scheme), but you can create third account for bob and use it as intermediary (like CoinSwap scheme). Try it yourself!
 
 After changing the initial data, you just need to start the application and it will generate all possible transactions. Try all cases: a simple successful exchange, a refund of money after the expiration of time or when disclosing a secret (`bobX`). Then just send transaction hex bytes through the explorer and look at the result!
+
+# How to run
+
+Using `sbt` from the project folder:
+
+`sbt run`
+
+or import the SBT project to IntelliJ IDEA and run `ru.tolsi.CoinSwap` class.
+
+If you see some errors when importing or running in the IntelliJ IDEA, try run `sbt clean compile` from the project folder.
