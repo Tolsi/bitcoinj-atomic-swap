@@ -1,7 +1,7 @@
 package ru.tolsi
 
 import com.typesafe.scalalogging.StrictLogging
-import org.bitcoinj.core.{Coin, ECKey, Utils}
+import org.bitcoinj.core.{Base58, Coin, ECKey, Utils}
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.script.ScriptBuilder
 import ru.tolsi.coinswap._
@@ -24,6 +24,15 @@ object CoinSwap extends App with StrictLogging {
     hashX,
     now,
     ConsoleFakeNetwork)
+
+  def privateKeyBytesFromWIF(wif: String): Array[Byte] = {
+     val wifBytes = Base58.decode(wif)
+    val withoutMetaData = wifBytes.dropRight(4).drop(1)
+    // is public key is compressed
+    if (withoutMetaData.last == 1) {
+      withoutMetaData.dropRight(1)
+    } else withoutMetaData
+  }
 
   private val alicePk = {
     val pk = Array.fill(32)(1.toByte)
