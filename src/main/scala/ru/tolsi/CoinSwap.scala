@@ -9,21 +9,6 @@ import ru.tolsi.coinswap._
 import scala.concurrent.duration._
 
 object CoinSwap extends App with StrictLogging {
-  def buildTestParams(
-                       hashX: Array[Byte],
-                       aliceAmount: Coin,
-                       carolAmount: Coin,
-                       now: Long
-                     ): Params = Params(
-    TestNet3Params.get(),
-    // 0.01 BTC
-    fee = Coin.CENT,
-    timeout = 1 minute,
-    aliceAmount,
-    carolAmount,
-    hashX,
-    now,
-    ConsoleFakeNetwork)
 
   def privateKeyBytesFromWIF(wif: String): Array[Byte] = {
      val wifBytes = Base58.decode(wif)
@@ -35,35 +20,51 @@ object CoinSwap extends App with StrictLogging {
   }
 
   private val alicePk = privateKeyBytesFromWIF("cMceqPfyJdTT2tDycQBWBUGcjeoedF2v8dZBzc1svRj9jFAiLXVA")
+  private val carolPk = privateKeyBytesFromWIF("cMceqPhHMLdvTKwTxeTWntcaP4z6FpdCr3MqH8LheqipaqmeaYUU")
+
+  private val carolPublic = new CarolPublicState {
+    override def publicKey: Array[Byte] = ECKey.fromPrivate(carolPk).getPubKey
+  }
   private val alicePublic = new AlicePublicState {
     override def publicKey: Array[Byte] = ECKey.fromPrivate(alicePk).getPubKey
   }
 
-  private val carolPk = privateKeyBytesFromWIF("cMceqPhHMLdvTKwTxeTWntcaP4z6FpdCr3MqH8LheqipaqmeaYUU")
-  private val carolPublic = new CarolPublicState {
-    override def publicKey: Array[Byte] = ECKey.fromPrivate(carolPk).getPubKey
-  }
-
   private val bobX = "I don't like alice".getBytes
 
-  implicit private val p = buildTestParams(
+  private val networkParams = TestNet3Params.get()
+
+  private val aliceOutInfoBC1 = BitcoinInputInfo(
+    txId = "d4873e0c88457b1c31322bd8d3fce738e7ad426bdbe44c588d67e9b571b19e04",
+    outputIndex = 0,
+    amount = Coin.parseCoin("1.83211665"),
+    script = ScriptBuilder.createOutputScript(ECKey.fromPrivate(alicePk).toAddress(networkParams)),
+    pk = alicePk)
+
+  private val carolOutInfoBC2 = BitcoinInputInfo(
+    txId = "5f15ac91050d2de5a3d6e1db5a1787a73c209dfb6b2b3919573705289cdccdb9",
+    outputIndex = 0,
+    amount = Coin.parseCoin("0.25749999"),
+    script = ScriptBuilder.createOutputScript(ECKey.fromPrivate(carolPk).toAddress(networkParams)),
+    pk = carolPk)
+  
+  implicit private val p = Params(
+    networkParams = networkParams,
+    // 0.01 BTC
+    fee = Coin.CENT,
+    timeout = 1 minute,
+    aliceAmount = aliceOutInfoBC1.amount,
+    carolAmount = carolOutInfoBC2.amount,
     hashX = Utils.sha256hash160(bobX),
-    aliceAmount = Coin.parseCoin("1.83211665"),
-    carolAmount = Coin.parseCoin("0.25749999"),
-    now = System.currentTimeMillis() / 1000
-  )
+    // you can hardcode it to make this app deterministic
+    startTimestamp = System.currentTimeMillis() / 1000,
+    network = ConsoleFakeNetwork)
 
   val aliceEC = ECKey.fromPrivate(alicePk)
   val carolEC = ECKey.fromPrivate(carolPk)
-  logger.info(s"Alice ${ECKey.fromPrivate(alicePk).toAddress(p.networkParams)} [public key: ${aliceEC.getPublicKeyAsHex}]")
-  logger.info(s"Carol ${carolEC.toAddress(p.networkParams)} [public key: ${carolEC.getPublicKeyAsHex}]")
-  logger.info(s"Bob ${ECKey.fromPrivate(alicePk).toAddress(p.networkParams)} [public key: ${aliceEC.getPublicKeyAsHex}]")
 
-  private val aliceOutInfoBC1 = BitcoinInputInfo("d4873e0c88457b1c31322bd8d3fce738e7ad426bdbe44c588d67e9b571b19e04", 0,
-    ScriptBuilder.createOutputScript(ECKey.fromPrivate(alicePk).toAddress(p.networkParams)), alicePk)
-
-  private val carolOutInfoBC2 = BitcoinInputInfo("5f15ac91050d2de5a3d6e1db5a1787a73c209dfb6b2b3919573705289cdccdb9", 0,
-    ScriptBuilder.createOutputScript(ECKey.fromPrivate(carolPk).toAddress(p.networkParams)), carolPk)
+  logger.info(s"Alice ${ECKey.fromPrivate(alicePk).toAddress(networkParams)} [public key: ${aliceEC.getPublicKeyAsHex}]")
+  logger.info(s"Carol ${carolEC.toAddress(networkParams)} [public key: ${carolEC.getPublicKeyAsHex}]")
+  logger.info(s"Bob ${ECKey.fromPrivate(alicePk).toAddress(networkParams)} [public key: ${aliceEC.getPublicKeyAsHex}]")
 
   // TX0 - Alice -> Multisig1[Alice, Carol]
   // TX1 - Carol -> Multisig2[Bob, Carol]
