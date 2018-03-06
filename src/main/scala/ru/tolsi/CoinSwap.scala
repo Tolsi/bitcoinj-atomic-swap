@@ -34,24 +34,12 @@ object CoinSwap extends App with StrictLogging {
     } else withoutMetaData
   }
 
-  private val alicePk = {
-    val pk = Array.fill(32)(1.toByte)
-    pk(3) = 0
-    pk(4) = 0
-    pk(31) = 0
-    pk
-  }
+  private val alicePk = privateKeyBytesFromWIF("cMceqPfyJdTT2tDycQBWBUGcjeoedF2v8dZBzc1svRj9jFAiLXVA")
   private val alicePublic = new AlicePublicState {
     override def publicKey: Array[Byte] = ECKey.fromPrivate(alicePk).getPubKey
   }
 
-  private val carolPk = {
-    val pk = Array.fill(32)(1.toByte)
-    pk(4) = 0
-    pk(5) = 0
-    pk(23) = 0
-    pk
-  }
+  private val carolPk = privateKeyBytesFromWIF("cMceqPhHMLdvTKwTxeTWntcaP4z6FpdCr3MqH8LheqipaqmeaYUU")
   private val carolPublic = new CarolPublicState {
     override def publicKey: Array[Byte] = ECKey.fromPrivate(carolPk).getPubKey
   }
