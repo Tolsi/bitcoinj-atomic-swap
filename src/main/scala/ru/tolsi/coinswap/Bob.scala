@@ -30,13 +30,13 @@ object Bob extends StrictLogging {
     val TX3Amount = p.carolAmount.minus(p.fee.multiply(2))
     val multisigScript2of2BC2 =
       ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(bobPublicKey), ECKey.fromPublicOnly(carolPublicState.publicKey)).asJava)
-    val bobTx3Signature = BitcoinInputInfo(m.TX1Id, 0, multisigScript2of2BC2, bobPrivateKey)
+    val bobTx3Signature = BitcoinInputInfo(m.TX1Id, 0, TX3Amount, multisigScript2of2BC2, bobPrivateKey)
 
     val TX3 = sendMoneyFromMultisig(Seq(bobTx3Signature, m.carolTX3signature), TX3Amount, T3script)
     logger.debug(s"Backout TX3 for Bob [${TX3.getHashAsString}] = ${Hex.toHexString(TX3.unsafeBitcoinSerialize)}")
 
     val TX7Amount = p.carolAmount.minus(p.fee.multiply(3))
-    val TX7Bob = createBackoutTransactionByX(BitcoinInputInfo(TX3.getHashAsString, 0, T3script, bobPrivateKey), TX7Amount, X,
+    val TX7Bob = createBackoutTransactionByX(BitcoinInputInfo(TX3.getHashAsString, 0, TX7Amount, T3script, bobPrivateKey), TX7Amount, X,
       ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(bobPublicKey).toAddress(p.networkParams)))
     logger.debug(s"TX7 Backout from TX3 to Bob by X [${TX7Bob.getHashAsString}] = ${Hex.toHexString(TX7Bob.unsafeBitcoinSerialize)}")
 
@@ -50,7 +50,7 @@ object Bob extends StrictLogging {
            )(implicit p: Params): Either[Exception, Unit] = {
     val multisigScript2of2BC2 = ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(prevState.publicKey), ECKey.fromPublicOnly(prevState.carolPublicState.publicKey)).asJava)
     val TX5Amount = p.carolAmount.minus(p.fee.multiply(2))
-    val bobTx5Signature = BitcoinInputInfo(prevState.TX1id, 0, multisigScript2of2BC2, bobPrivateKey)
+    val bobTx5Signature = BitcoinInputInfo(prevState.TX1id, 0, TX5Amount, multisigScript2of2BC2, bobPrivateKey)
     val TX5 = sendMoneyFromMultisig(Seq(bobTx5Signature, m.carolTx5Signature), TX5Amount, ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(prevState.publicKey).toAddress(p.networkParams)))
     p.network.sendTx(TX5, "TX5")
     Right()

@@ -58,12 +58,12 @@ object Carol extends StrictLogging {
     val T3script = createXHashUntilTimelockOrToSelfScript(p.hashX, bobPublicState.publicKey, lockTimeCarolTs, carolPublicKey)
 
     val TX2Amount = p.aliceAmount.minus(p.fee.multiply(2))
-    val carolTx2Signature = BitcoinInputInfo(m.TX0Id, 0, multisigScript2of2BC1, carolPrivateKey)
+    val carolTx2Signature = BitcoinInputInfo(m.TX0Id, 0, TX2Amount, multisigScript2of2BC1, carolPrivateKey)
     // todo verify m.aliceTX2signature
     val TX2 = sendMoneyFromMultisig(Seq(m.aliceTX2signature, carolTx2Signature), TX2Amount, T2script)
     logger.debug(s"Backout TX2 for Carol [${TX2.getHashAsString}] = ${Hex.toHexString(TX2.unsafeBitcoinSerialize)}")
 
-    val carolTx3Signature = BitcoinInputInfo(TX1.getHashAsString, 0, multisigScript2of2BC2, carolPrivateKey)
+    val carolTx3Signature = BitcoinInputInfo(TX1.getHashAsString, 0, p.carolAmount.minus(p.fee.multiply(2)), multisigScript2of2BC2, carolPrivateKey)
 
     Right(
       CarolAfter2Step(carolPublicKey, alicePublicState, bobPublicState, m.TX0Id, TX1, TX2, carolTx3Signature, T2script, T3script),
@@ -83,7 +83,7 @@ object Carol extends StrictLogging {
     logger.debug(s"Backout TX3 for Carol [${TX3.getHashAsString}] = ${Hex.toHexString(TX3.unsafeBitcoinSerialize)}")
     val TX7Amount = p.carolAmount.minus(p.fee.multiply(3))
     // todo it works in any case :<
-    val TX7Carol = createBackoutTransactionByTimeout(BitcoinInputInfo(TX3.getHashAsString, 0, prevState.T3script, carolPrivateKey), TX7Amount,
+    val TX7Carol = createBackoutTransactionByTimeout(BitcoinInputInfo(TX3.getHashAsString, 0, TX7Amount, prevState.T3script, carolPrivateKey), TX7Amount,
       ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(prevState.publicKey).toAddress(p.networkParams)))
     logger.debug(s"TX7 Backout from TX3 to Carol by timeout [${TX7Carol.getHashAsString}] = ${Hex.toHexString(TX7Carol.unsafeBitcoinSerialize)}")
     p.network.sendTx(prevState.TX1, "TX1")
@@ -98,10 +98,10 @@ object Carol extends StrictLogging {
            )(implicit p: Params): Either[Exception, (CarolAfter6Step, MessageCarolToBobAfter6Step)] = {
     val multisigScript2of2BC2 = ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(prevState.prevState.bobPublicState.publicKey), ECKey.fromPublicOnly(prevState.publicKey)).asJava)
     val TX5Amount = p.carolAmount.minus(p.fee.multiply(2))
-    val carolTx5Signature = BitcoinInputInfo(prevState.prevState.TX1.getHashAsString, 0, multisigScript2of2BC2, carolPrivateKey)
+    val carolTx5Signature = BitcoinInputInfo(prevState.prevState.TX1.getHashAsString, 0, TX5Amount, multisigScript2of2BC2, carolPrivateKey)
 
     val TX6Amount = p.aliceAmount.minus(p.fee.multiply(3))
-    val TX6Carol = createBackoutTransactionByX(BitcoinInputInfo(prevState.prevState.TX2.getHashAsString, 0, prevState.prevState.T2script, carolPrivateKey), TX6Amount, X,
+    val TX6Carol = createBackoutTransactionByX(BitcoinInputInfo(prevState.prevState.TX2.getHashAsString, 0, TX6Amount, prevState.prevState.T2script, carolPrivateKey), TX6Amount, X,
       ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(prevState.publicKey).toAddress(p.networkParams)))
     logger.debug(s"TX6 Backout from TX2 for Carol by X [${TX6Carol.getHashAsString}] = ${Hex.toHexString(TX6Carol.unsafeBitcoinSerialize)}")
 
@@ -113,8 +113,8 @@ object Carol extends StrictLogging {
             m: MessageAliceToCarolAfter8Step
            )(implicit p: Params): Either[Exception, Unit] = {
     val multisigScript2of2BC1 = ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(prevState.prevState.prevState.alicePublicState.publicKey), ECKey.fromPublicOnly(prevState.prevState.publicKey)).asJava)
-    val carolTx4Signature = BitcoinInputInfo(prevState.prevState.prevState.TX0id, 0, multisigScript2of2BC1, carolPrivateKey)
     val TX4Amount = p.aliceAmount.minus(p.fee.multiply(2))
+    val carolTx4Signature = BitcoinInputInfo(prevState.prevState.prevState.TX0id, 0, TX4Amount, multisigScript2of2BC1, carolPrivateKey)
     val TX4 = sendMoneyFromMultisig(Seq(m.aliceTx4Signature, carolTx4Signature), TX4Amount,
       ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(prevState.publicKey).toAddress(p.networkParams)))
     p.network.sendTx(TX4, "TX4")

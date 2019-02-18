@@ -48,7 +48,7 @@ object Alice extends StrictLogging {
     val TX0 = sendMoneyToScript(aliceInput, TX0Amount, multisigScript2of2BC1)
     val TX0id = TX0.getHashAsString
 
-    val aliceTX2signature = BitcoinInputInfo(TX0id, 0, multisigScript2of2BC1, alicePrivateKey)
+    val aliceTX2signature = BitcoinInputInfo(TX0id, 0, aliceInput.amount.minus(p.fee.multiply(2)), multisigScript2of2BC1, alicePrivateKey)
 
     Right(AliceAfter1Step(alicePublicKey, carolPublicState, TX0, aliceTX2signature), MessageAliceToBobAfter1Step(TX0id, aliceTX2signature))
   }
@@ -59,8 +59,8 @@ object Alice extends StrictLogging {
     // todo verify m.carolTX2signature
     p.network.sendTx(prevState.TX0, "TX0")
     val multisigScript2of2BC1 = ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(prevState.publicKey), ECKey.fromPublicOnly(prevState.carolPublicState.publicKey)).asJava)
-    val aliceTX2signature = BitcoinInputInfo(prevState.TX0.getHashAsString, 0, multisigScript2of2BC1, alicePrivateKey)
     val TX2Amount = p.aliceAmount.minus(p.fee.multiply(2))
+    val aliceTX2signature = BitcoinInputInfo(prevState.TX0.getHashAsString, 0, TX2Amount, multisigScript2of2BC1, alicePrivateKey)
     val lockTimeAliceTs = p.startTimestamp + p.timeout.toSeconds * 2
     val T2script = createXHashUntilTimelockOrToSelfScript(p.hashX, prevState.carolPublicState.publicKey, lockTimeAliceTs, prevState.publicKey)
     // todo may be use P2SH for working OP_CHECKLOCKTIMEVERIFY ?
@@ -68,7 +68,7 @@ object Alice extends StrictLogging {
     logger.debug(s"Backout TX2 for Alice [${TX2.getHashAsString}] = ${Hex.toHexString(TX2.unsafeBitcoinSerialize)}")
     val TX6Amount = p.aliceAmount.minus(p.fee.multiply(3))
     // todo it works in any case :<
-    val TX6Alice = createBackoutTransactionByTimeout(BitcoinInputInfo(TX2.getHashAsString, 0, T2script, alicePrivateKey), TX6Amount,
+    val TX6Alice = createBackoutTransactionByTimeout(BitcoinInputInfo(TX2.getHashAsString, 0, p.aliceAmount.minus(p.fee.multiply(2)), T2script, alicePrivateKey), TX6Amount,
       ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(prevState.publicKey).toAddress(p.networkParams)))
     logger.debug(s"TX6 Backout from TX2 for Alice by timeout [${TX6Alice.getHashAsString}] = ${Hex.toHexString(TX6Alice.unsafeBitcoinSerialize)}")
 
@@ -79,7 +79,7 @@ object Alice extends StrictLogging {
             prevState: AliceAfter4Step
            )(implicit p: Params): Either[Exception, MessageAliceToCarolAfter8Step] = {
     val multisigScript2of2BC1 = ScriptBuilder.createMultiSigOutputScript(2, List(ECKey.fromPublicOnly(prevState.publicKey), ECKey.fromPublicOnly(prevState.prevState.carolPublicState.publicKey)).asJava)
-    val aliceTx4Signature = BitcoinInputInfo(prevState.prevState.TX0.getHashAsString, 0, multisigScript2of2BC1, alicePrivateKey)
+    val aliceTx4Signature = BitcoinInputInfo(prevState.prevState.TX0.getHashAsString, 0, p.aliceAmount.minus(p.fee.multiply(2)), multisigScript2of2BC1, alicePrivateKey)
     Right(MessageAliceToCarolAfter8Step(aliceTx4Signature))
   }
 }
