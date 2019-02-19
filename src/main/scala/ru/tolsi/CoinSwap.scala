@@ -73,7 +73,7 @@ object CoinSwap extends App with StrictLogging {
   // TX4 - Alice + Carol -> [cooperative case] - Multisig1[Alice, Carol] -> Carol
   // TX5 - Bob + Carol -> [cooperative case] - Multisig2[Bob, Carol] -> Alice
   // TX6 - Alice or Carol [failed case] - scr1 (TX2) -> Alice or Carol
-  // TX7 - Bob or Carol [failed case] - scr2 (TX3) -> Alice or Carol
+  // TX7 - Bob or Carol [failed case] - scr2 (TX3) -> Bob or Carol
 
   val (alice1, atc1) = Alice.step1(alicePk, aliceOutInfoBC1, carolPublic).right.get
   val (carol2, cta1, ctb1) = Carol.step2(carolPk, carolOutInfoBC2, alicePublic, alicePublic, atc1).right.get
